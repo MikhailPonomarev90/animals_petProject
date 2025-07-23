@@ -1,3 +1,7 @@
+import * as CHART from './chartJS.js';
+const ctx = document.getElementById('myChart').getContext('2d');
+const DAY_STEP = 50;
+
 function getRandomIndexFromArray(array) {
   return Math.floor(Math.random() * array.length);
 }
@@ -21,11 +25,11 @@ function calculatEeagleHunger() {
 }
 
 const GRASS_AMOUNT = 130;
-const MICE_AMOUNT = 1000;
+const MICE_AMOUNT = 500;
 const EAGLES_AMOUNT = 10;
 const DAYS = 365*5;
 
-const MAX_MICE_AMOUNT = 20000;
+const MAX_MICE_AMOUNT = 10000;
 
 const GRASS = {
   population: GRASS_AMOUNT
@@ -114,20 +118,35 @@ class Logger {
 
 class DataBase {
   constructor() {
-    this.dayData = [];
+    this.dayData = {
+      eagles: [],
+      mices: [],
+      grassAmount: [],
+      day: []
+    };
+    this.dayInfo = {
+      eagles: 0,
+      mices: 0,
+      grassAmount: 0,
+      day: 0
+    }
   }
-  logDayData() {
-      this.dayData.push({
-          eagles: EAGLES.population.length,
-          mices: MICE.population.length,
-          grassAmount: GRASS.population
-      });
+
+  logDayData(day) {
+      this.dayData.eagles.push(EAGLES.population.length);
+      this.dayData.mices.push(MICE.population.length),
+      this.dayData.grassAmount.push(GRASS.population),
+      this.dayData.day.push(day)
   }
 
   printStats(dayStep) {
-      this.dayData.forEach((day, index) => {
+      this.dayData.day.forEach((day, index) => {
           if (index%dayStep === 0 || index === this.dayData.length - 1) {
-            logger.printDataFromDBForDay(day, index);
+            this.dayInfo.eagles = this.dayData.eagles[index];
+            this.dayInfo.mices = this.dayData.mices[index];
+            this.dayInfo.grassAmount = this.dayData.grassAmount[index];
+            this.dayInfo.day = day;
+            logger.printDataFromDBForDay(this.dayInfo, index);
           }
       })
   }
@@ -267,6 +286,32 @@ function generateWorld() {
   DB.printStats(50);
 }
 
+function generateCanvas() {
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [...DB.dayData.day],
+      datasets: [
+      {
+        label: "Grass",
+        data: [...DB.dayData.grassAmount],
+        borderColor: "green"
+      },
+      {
+        label: "Mice",
+        data: [...DB.dayData.mices],
+        borderColor: "gray"
+      },
+      {
+        label: "Eagles",
+        data: [...DB.dayData.eagles],
+        borderColor: "blue"
+      }
+    ]
+    }
+  })
+}
+
 function startCountDays() {
   for (let index = 1; index < DAYS; index++) {
       dayNumber = index;
@@ -284,8 +329,9 @@ function startCountDays() {
       });
       GRASS.population = GRASS.population + (Math.floor((GRASS_AMOUNT/100)*calculateRange(10)));
       mice_index = Math.floor(MAX_MICE_AMOUNT/MICE.population.length);
-      DB.logDayData();
+      DB.logDayData(index);
   }
+  generateCanvas();
 }
 
 generateWorld();
