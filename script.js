@@ -6,9 +6,23 @@ function calculateRange(max) {
   return Math.floor(Math.random() * max) + 1;
 }
 
-const GRASS_AMOUNT = 120;
+function calculateProbability(K) {
+  return calculateRange(10) > K;
+}
+
+function calculatEeagleHunger() {
+  if (mice_index > 2) {
+    calculateProbability(8)
+  } else if (mice_index > 3) {
+    calculateProbability(5)
+  } else if (mice_index > 5) {
+    calculateProbability(3)
+  } else return false;
+}
+
+const GRASS_AMOUNT = 130;
 const MICE_AMOUNT = 1000;
-const EAGLES_AMOUNT = 6;
+const EAGLES_AMOUNT = 10;
 const DAYS = 365*5;
 
 const MAX_MICE_AMOUNT = 20000;
@@ -230,7 +244,7 @@ class Eagle extends Animal {
       logger.isNoFood(this.animalName);
       return;
     }
-    if (mice_index > 5 && calculateRange(10) > 3) {
+    if (calculatEeagleHunger()) {
       logger.difficultToFindMices();
       this.dead();
       return;
@@ -262,7 +276,6 @@ function startCountDays() {
         })
         break;
       }
-      mice_index = Math.floor(MAX_MICE_AMOUNT/MICE.population.length);
       MICE.population.forEach((mouse) => {
           mouse.liveOneDay();
       });
@@ -270,6 +283,7 @@ function startCountDays() {
           eagle.liveOneDay();
       });
       GRASS.population = GRASS.population + (Math.floor((GRASS_AMOUNT/100)*calculateRange(10)));
+      mice_index = Math.floor(MAX_MICE_AMOUNT/MICE.population.length);
       DB.logDayData();
   }
 }
